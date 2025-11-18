@@ -1,0 +1,24 @@
+
+
+Pontos importantes para implementar:
+
+stimuli_count : usado para validar que stimuli_sequence tenha esse tamanho
+stimuli_type:
+  random    : cria a lista de execucao do tamanha de stimuli_count embaralhada, stimuli_sequence = []
+  sequence  : usa a lista que stimuli_sequence contem, stimuli_sequence = [1,3,4,7,8...] = len(stimuli_count)
+stimuli_sequence [] : é a lista final de sensores a ativar, na ordem que vai executar.
+
+delay_type :
+    fixed: delay sempre o mesmo
+    range: delay aleatório entre valores min/max
+    individual: um delay diferente para cada estímulo
+
+delay_range_ms [] :
+    if fixed: [500]
+    if range: [500, 1000]
+    if individual: [500, 100, 200, 300...] = len(stimuli_count) 
+
+execution_rounds : indica quantas vezes repetir a sequência toda.
+timeout_ms : controla o tempo máximo para resposta. >= 0
+repeat_if_wrong : orienta se deve repetir o estímulo em caso de erro. True or False
+
