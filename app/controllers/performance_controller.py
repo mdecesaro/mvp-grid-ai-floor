@@ -48,13 +48,13 @@ class PerformanceController:
 
             self.current_timeout_ms = exercise.p.get("timeout_ms", 0)
             self.current_repeat_if_wrong = exercise.p.get("repeat_if_wrong", False)
-            # Test OBJ
-
+            
             ui_plan = UIExercisePlan(exercise, athlete)
             self.executor_manager.executor.set_callbacks(
                 on_log=lambda msg: self._on_log(msg),
-                on_finish_test=lambda test_id: self._on_finis_test(test_id)
+                on_finish_test=lambda test_id: self._on_finish_test(test_id)
             )
+            
             self.executor_manager.load_plan(ui_plan)
             self.executor_manager.start()
             
@@ -62,7 +62,10 @@ class PerformanceController:
         except Exception as e:
             self.view._log(f"❌ Erro ao iniciar teste: {e}")
 
-    def _on_finis_test(self, test_results):
+    def _on_finish_test(self, test_results):
+        if(test_results == "DONE"):
+            return
+        
         total_attempts = len(test_results)
         hits = sum(1 for r in test_results if not r.error)
         errors = sum(1 for r in test_results if r.error)

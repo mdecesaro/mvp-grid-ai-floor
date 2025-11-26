@@ -5,7 +5,7 @@ import time
 from app.services.pserial.commands import HANDSHAKE_COMMAND
 
 class SerialManager:
-    def __init__(self, port=None, baudrate=9600, timeout=2):
+    def __init__(self, port=None, baudrate=115200, timeout=2):
         self.port = port
         self.baudrate = baudrate
         self.timeout = timeout
@@ -47,10 +47,6 @@ class SerialManager:
             "sensors": None,
             "ready": False
         }
-
-        #define GRID_ID "PRO"
-        #define SENSOR_COUNT "14"
-        #define FIRMWARE_VERSION "1.0.0"
 
         start_time = time.time()
         timeout = 3
