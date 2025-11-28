@@ -44,8 +44,6 @@ class DeviceLayout:
             self.excluded_sensors = set()
 
         if self.sensor_count > 0 and self.type is not None:
-            print("### Entrou ###")
-            print(self.sensor_count, self.type)
             self.sensors = self.sensor_dao.get_all_sensors(self.type)
         else:
             self.sensors = []

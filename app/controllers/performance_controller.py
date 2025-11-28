@@ -13,7 +13,7 @@ class PerformanceController:
 
     def load_data(self):
         try:
-            exercises = self.exercise_dao.get_all_exercises()
+            exercises = self.exercise_dao.get_all_exercises_by_size(self.context.device_layout.sensor_count)
             self.view.populate_exercises(exercises)
 
             athletes = self.athlete_dao.get_all_athletes()

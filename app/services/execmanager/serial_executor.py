@@ -33,23 +33,21 @@ class SerialExecutor:
             self._log("⚠️ Execução já em andamento.")
             return
         
+
+        print(self.plan.get_execution_plan())
+        '''
         self.active = True
-        
         self.serial_manager.send_command("SET|14|0|700|1|008000")
         self._log("➡️ Enviado: SET")
-
         if not self._wait_for_set_ok(timeout=2.0):
             self._log("❌ Falha: Arduino não confirmou SET.")
             self.active = False
             return
-        
         self._log("✔️ SET confirmado. Enviando START...")
-
         self.serial_manager.send_command("START")
-        
         t = threading.Thread(target=self._listen_thread, daemon=True)
         t.start()
-
+        '''
     def _wait_for_set_ok(self, timeout=2.0):
         import time
         start = time.time()

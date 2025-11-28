@@ -55,7 +55,7 @@ class SerialManager:
             if not line:
                 continue
 
-            print("[ARDUINO]", line)
+            #print("[ARDUINO]", line)
 
             if line.startswith("DEVICE:"):
                 handshake_data["device"] = line.split(":")[1]

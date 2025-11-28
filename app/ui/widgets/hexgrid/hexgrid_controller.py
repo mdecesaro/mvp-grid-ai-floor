@@ -11,8 +11,6 @@ class HexGridController:
         self.device_layout = self.context.device_layout
         
     def update_layout(self, sensor_count):
-        print(f"[HexGridController] Atualizando layout com {sensor_count} sensores")
-        
         self.device_layout.load_layout(sensor_count)
         self.view.reset_canvas()
         if self.device_layout.is_layout_drawable():

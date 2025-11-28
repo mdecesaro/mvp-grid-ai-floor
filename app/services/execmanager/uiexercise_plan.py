@@ -84,13 +84,13 @@ exercise_schema = exercise_schema = {
     "additionalProperties": False
 }
 
-
-
 ## pensar em implementar exames de salto na plataforma da Vald e usar para ML
 class UIExercisePlan:
     def __init__(self, exercise, athlete):
         self.exercise = exercise
         self.athlete = athlete
+
+        print(self.exercise.board_size)
 
         # 1. Extrair os parâmetros (mesma lógica de antes)
         params = exercise.parameters

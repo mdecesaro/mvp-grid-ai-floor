@@ -109,6 +109,30 @@ class ExerciseDAO:
         """)
         rows = cursor.fetchall()
         return [Exercise.from_row(row) for row in rows]
+    
+    def get_all_exercises_by_size(self, board_size):
+        print(board_size)
+        cursor = self.db.get_cursor()
+        cursor.execute("""
+            SELECT 
+                e.id,
+                e.category_id,
+                c.name AS category_name,
+                e.code,
+                e.name,
+                e.description,
+                e.level,
+                e.objective,
+                e.modality,
+                e.parameters,
+                e.active,
+                e.board_size
+            FROM exercises e
+            JOIN categories c ON e.category_id = c.id
+            WHERE e.board_size = ? ORDER BY e.id
+        """, (board_size,))
+        rows = cursor.fetchall()
+        return [Exercise.from_row(row) for row in rows]
 
 
     

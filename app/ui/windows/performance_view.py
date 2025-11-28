@@ -1,5 +1,4 @@
 import customtkinter as ctk
-from tkinter import ttk
 from datetime import datetime
 
 class PerformanceTestingView(ctk.CTkToplevel):
