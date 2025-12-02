@@ -1,4 +1,5 @@
-from app.services.execmanager.uiexercise_plan import UIExercisePlan
+from app.executors.serial.serial_builder import SerialBuilder
+from app.executors.ui.ui_builder import UIBuilder
 from app.data.models.evaluation_test import EvaluationTest
 import time
 
@@ -49,12 +50,15 @@ class PerformanceController:
             self.current_timeout_ms = exercise.p.get("timeout_ms", 0)
             self.current_repeat_if_wrong = exercise.p.get("repeat_if_wrong", False)
             
-            ui_plan = UIExercisePlan(exercise, athlete)
+            if(self.context.device_layout.sensor_count == 32):
+                ui_plan = UIBuilder(exercise, athlete)
+            else:
+                ui_plan = SerialBuilder(exercise, athlete)
+
             self.executor_manager.executor.set_callbacks(
                 on_log=lambda msg: self._on_log(msg),
                 on_finish_test=lambda test_id: self._on_finish_test(test_id)
             )
-            
             self.executor_manager.load_plan(ui_plan)
             self.executor_manager.start()
             

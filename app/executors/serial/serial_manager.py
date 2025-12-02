@@ -2,7 +2,7 @@
 
 import serial
 import time
-from app.services.pserial.commands import HANDSHAKE_COMMAND
+from app.executors.serial.commands import HANDSHAKE_COMMAND
 
 class SerialManager:
     def __init__(self, port=None, baudrate=115200, timeout=2):

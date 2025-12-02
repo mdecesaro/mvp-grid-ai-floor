@@ -1,5 +1,5 @@
-import threading
 from _tkinter import TclError
+import threading
 
 class SerialExecutor:
     def __init__(self, serial_manager, ui_canvas):
@@ -10,11 +10,13 @@ class SerialExecutor:
         self.on_log = None
         self.on_finish_test = None
 
+        self.correct_color = "#00FF00"
+
         self.active = False     
 
     def set_plan(self, plan):
         self.plan = plan
-    
+
     def set_callbacks(self, on_log=None, on_finish_test=None):
         self.on_log = on_log
         self.on_finish_test = on_finish_test
@@ -33,21 +35,30 @@ class SerialExecutor:
             self._log("⚠️ Execução já em andamento.")
             return
         
-
-        print(self.plan.get_execution_plan())
-        '''
+        # Check Command
+        command = self.plan.get_execution_plan().replace('#', '')
+        x = command.split("|")[-1]
+        is_hex = x.isalnum() and all(c in '0123456789abcdefABCDEF' for c in x)
+        if(is_hex):
+            self.correct_color = x
+            self.correct_color = self.correct_color if self.correct_color.startswith('#') else '#' + self.correct_color
+        # Check command
+        
         self.active = True
-        self.serial_manager.send_command("SET|14|0|700|1|008000")
+        self.serial_manager.send_command(command)
         self._log("➡️ Enviado: SET")
         if not self._wait_for_set_ok(timeout=2.0):
             self._log("❌ Falha: Arduino não confirmou SET.")
             self.active = False
             return
+        
         self._log("✔️ SET confirmado. Enviando START...")
         self.serial_manager.send_command("START")
+
         t = threading.Thread(target=self._listen_thread, daemon=True)
         t.start()
-        '''
+        
+        
     def _wait_for_set_ok(self, timeout=2.0):
         import time
         start = time.time()
@@ -58,10 +69,8 @@ class SerialExecutor:
                 continue
 
             line = line.strip()
-
             if line == "SET_OK":
                 return True
-            
             if line == "SET_ERROR":
                 return False
 
@@ -78,7 +87,7 @@ class SerialExecutor:
 
             if line.startswith("EVT"):
                 self._handle_event(line)
-
+            
             if line == "DONE":
                 break
 
@@ -100,7 +109,7 @@ class SerialExecutor:
 
             if evt == "ON":
                 sensor = 1#int(parts[2])
-                self.ui_canvas.turn_on(sensor, "#5CE65C")
+                self.ui_canvas.turn_on(sensor, self.correct_color)
             elif evt == "HIT":
                 sensor = int(parts[2])
                 ms = int(parts[3])

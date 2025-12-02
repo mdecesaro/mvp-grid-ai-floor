@@ -45,7 +45,7 @@ class StatusBarController:
             if self.on_sensor_count_changed:
                 self.on_sensor_count_changed(32)
             
-            from app.services.execmanager.ui_executor import UIExecutor
+            from app.executors.ui.ui_executor import UIExecutor
             canvas, _ = self.context.get_hexgrid()
             self.context.set_executor(UIExecutor(canvas, self.root))
 
@@ -65,7 +65,7 @@ class StatusBarController:
             if self.on_sensor_count_changed:
                 self.on_sensor_count_changed(sensor_count)
             
-            from app.services.execmanager.serial_executor import SerialExecutor
+            from app.executors.serial.serial_executor import SerialExecutor
             serial = self.context.serial_manager
             canvas, _ = self.context.get_hexgrid()
             self.context.set_executor(SerialExecutor(serial, canvas))
