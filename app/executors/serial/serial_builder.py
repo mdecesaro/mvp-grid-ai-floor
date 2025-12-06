@@ -29,8 +29,6 @@ class SerialBuilder:
 
         self.parameters = self.raw_data["parameters"]
 
-        print(self.parameters)
-
         self.validate_schema()
         self.validate_logic() 
         self.build_stimuli_sequence()
@@ -74,12 +72,10 @@ class SerialBuilder:
                     raise ValueError("'distractor_num' cannot exceed number of defined distractor colors")
 
         elif self.st_type in ["multi_light", "fake_light", "pattern", "position", "timed"]:
-            # regras específicas de cada tipo podem ser definidas aqui
             pass
         else:
             raise ValueError(f"Unsupported stimulus_type: {self.st_type}")
 
-    
     def build_stimuli_sequence(self):
         self.parts_cmd.append("SET")
         stimuli_count = self.parameters["stimuli_count"]
@@ -89,39 +85,23 @@ class SerialBuilder:
         if stimuli_generation_mode == "random":
             self.parts_cmd.append(str(0))
 
-        """
-        elif stimuli_generation_mode == "defined":
-            sequence = self.parameters["stimuli_sequence"]
-            if len(sequence) != stimuli_count:
-                raise ValueError(
-                    f"stimuli_sequence deve ter {stimuli_count} elementos, mas tem {len(sequence)}"
-                )
-        """
-    
     def build_delays(self):
         delay_type = self.parameters["delay_type"]
         delay_range_ms = self.parameters["delay_range_ms"]
-        #stimuli_count = self.parameters["stimuli_count"]
-
+        
+        # ex. 700
         if delay_type == "fixed":
             if len(delay_range_ms) != 1:
                 raise ValueError("delay_range_ms deve ter 1 valor para delay_type='fixed'")
             self.parts_cmd.append(str(delay_range_ms[0]))
-            
-        """
+        
+        # ex. 500,700
         elif delay_type == "range":
             if len(delay_range_ms) != 2:
                 raise ValueError("delay_range_ms deve ter 2 valores [min, max] para delay_type='range'")
             min_d, max_d = delay_range_ms
-            self.parameters["final_delays"] = [
-                random.randint(min_d, max_d) for _ in range(stimuli_count)
-            ]
-        elif delay_type == "individual":
-            if len(delay_range_ms) != stimuli_count:
-                raise ValueError(f"delay_range_ms deve ter {stimuli_count} valores para delay_type='individual'")
-            self.parameters["final_delays"] = delay_range_ms.copy()
-        """
-
+            self.parts_cmd.append(str(min_d+","+max_d))
+            
     def build_rounds(self):
         execution_rounds = self.parameters["execution_rounds"]
         self.parts_cmd.append(str(execution_rounds))
@@ -133,7 +113,6 @@ class SerialBuilder:
     def build(self):
         self.command = "|".join(self.parts_cmd) 
 
-    
     def get_execution_plan(self):
         return self.command
     

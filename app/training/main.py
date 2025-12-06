@@ -121,7 +121,6 @@ def run_training_with_gridsearch(X, y):
         r2 = r2_score(y_true, y_pred)
         mae = mean_absolute_error(y_true, y_pred)
         rmse = np.sqrt(mean_squared_error(y_true, y_pred))
-
         print(f"{name} - R²: {r2:.3f}, MAE: {mae:.2f}, RMSE: {rmse:.2f}")
 
     # Importância das features para modelos que suportam
@@ -192,6 +191,8 @@ def run_training_with_models():
     # Target transformado
     df_clean['reaction_time_log'] = np.log1p(df_clean['reaction_time'])
     y = df_clean['reaction_time_log']
+    
+    print(df_clean['reaction_time'])
 
     # Lista de features
     features = [

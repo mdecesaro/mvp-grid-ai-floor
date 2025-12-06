@@ -67,9 +67,6 @@ class PerformanceController:
             self.view._log(f"❌ Erro ao iniciar teste: {e}")
 
     def _on_finish_test(self, test_results):
-        if(test_results == "DONE"):
-            return
-        
         total_attempts = len(test_results)
         hits = sum(1 for r in test_results if not r.error)
         errors = sum(1 for r in test_results if r.error)
@@ -95,8 +92,10 @@ class PerformanceController:
             errors=errors,
             avg_reaction_time=avg_reaction_time,
             duration_ms=duration_ms,
+            # All Results 
             results=test_results
         )
+        
         # Salvar no banco de dados
         test_id = self.evaluation_dao.insert_test_result(eval_test)
         self._on_log(f"✅ Teste salvo no banco com id {test_id}")

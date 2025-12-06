@@ -48,7 +48,7 @@ def create_tables():
             wrong_stimulus_id TEXT,
             distractor_type TEXT,
             distractor_id_color TEXT, -- podemos armazenar JSON
-            FOREIGN KEY (test_id) REFERENCES tests (id) ON DELETE CASCADE
+            FOREIGN KEY (test_id) REFERENCES evaluation_tests (id) ON DELETE CASCADE
         )
     """)
 

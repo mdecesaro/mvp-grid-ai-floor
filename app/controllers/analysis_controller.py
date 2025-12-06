@@ -10,7 +10,7 @@ class AnalysisController:
         athletes = self.athlete_dao.get_all_athletes()
         return athletes
 
-    def get_evaluation_results(self):
-        return self.evaluation_dao.select_test_with_results(1, 1)
+    def get_evaluation_results(self, test_id, athlete_id):
+        return self.evaluation_dao.select_test_with_results(test_id, athlete_id)
         
    

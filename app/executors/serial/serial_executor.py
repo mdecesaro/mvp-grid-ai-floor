@@ -1,3 +1,4 @@
+from app.data.models.evaluation_result import EvaluationResult
 from _tkinter import TclError
 import threading
 
@@ -9,11 +10,11 @@ class SerialExecutor:
         self.plan = None
         self.on_log = None
         self.on_finish_test = None
-
         self.correct_color = "#00FF00"
-
         self.active = False     
 
+        self.results = []
+   
     def set_plan(self, plan):
         self.plan = plan
 
@@ -43,7 +44,7 @@ class SerialExecutor:
             self.correct_color = x
             self.correct_color = self.correct_color if self.correct_color.startswith('#') else '#' + self.correct_color
         # Check command
-        
+
         self.active = True
         self.serial_manager.send_command(command)
         self._log("➡️ Enviado: SET")
@@ -91,10 +92,6 @@ class SerialExecutor:
             if line == "DONE":
                 break
 
-        try:
-            self._log("🏁 Execução finalizada.")
-        except TclError:
-            pass
 
     def _listen_thread(self):
         try:
@@ -104,21 +101,62 @@ class SerialExecutor:
 
     def _handle_event(self, evt_line):
         try:
-            parts = evt_line.split("|")
-            evt = parts[1]
+            
+            parts     = evt_line.split("|")
+            evt_type  = parts[1]
+            round     = int(parts[2])
+            sensor_id = int(parts[3])
+            
+            # EVT|ON|ROUND|SENSOR
+            if evt_type == "ON":
+                self.ui_canvas.turn_on(sensor_id, self.correct_color)
+                self.partial_on_result(round, sensor_id)
+            
+            # EVT|HIT|ROUND|SENSOR|TIME|DELAY
+            elif evt_type == "HIT":
+                ms = int(parts[4])
+                delay = int(parts[5])
+                self.ui_canvas.turn_off(sensor_id)
+                self.record_end_result(round, sensor_id, ms, delay)
 
-            if evt == "ON":
-                sensor = 1#int(parts[2])
-                self.ui_canvas.turn_on(sensor, self.correct_color)
-            elif evt == "HIT":
-                sensor = int(parts[2])
-                ms = int(parts[3])
-            elif evt == "OFF":
-                sensor = int(parts[2])
-                self.ui_canvas.turn_off(1)    
+            # EVT|END|TOTAL_TIME|HITS|MISSES
+            elif evt_type == "END":
+                print("END EVT")
+
         except TclError:
             pass
     
+    def partial_on_result(self, round, sensor_id):
+        #self.results.append((round, sensor_id))
+        print(round, sensor_id)
+
+    def record_end_result(self, round, sensor_id, reaction_time_ms, delay):
+        #resultado = next(
+        #    (item for item in self.results if item[0] == round and item[1] == sensor_id), None)
+        
+        sensor_obj = self.ui_canvas.get_sensor_by_id(sensor_id)
+        stimulus_position = sensor_obj.sector if sensor_obj else "unknown"
+        foot_used = sensor_obj.expected_foot if sensor_obj else "unknown"
+
+        eval_result = EvaluationResult(
+            round_num=round,
+            stimulus_id         = sensor_id,
+            stimulus_position   = stimulus_position,
+            stimulus_type       = "color",
+            correct_color       = self.correct_color,
+            reaction_time       = reaction_time_ms,
+            stimulus_start      = 0,
+            stimulus_end        = 0,
+            delay_ms            = delay,
+            elapsed_since_start = 0,
+            error               = 0,
+            foot_used           = foot_used,
+            wrong_stimulus_id   = 0,
+            distractor_type     = getattr(self, "distractor_type", None),
+            distractor_id_color = [{"id": d["id"], "color": d["color"]} for d in getattr(self, "active_distractors", [])]
+        )
+        self.results.append(eval_result)
+
     # ===== Finalização =====
     def finish(self):
         if not self.active:
@@ -127,7 +165,7 @@ class SerialExecutor:
         self._log("🏁 DONE - Execução finalizada.")
         
         if callable(self.on_finish_test):
-            self.on_finish_test("DONE")
+            self.on_finish_test(self.results)
 
     def handle_result(self, data):
         print("📥 Resultado do hardware:", data)
