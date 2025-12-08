@@ -211,7 +211,7 @@ class EvaluationDAO:
         )
         return eval_test
 
-    def select_data_for_training(self):
+    def select_data_for_training(self, layout):
         cursor = self.db.get_cursor()
         cursor.execute("""
                     SELECT 
@@ -263,9 +263,9 @@ class EvaluationDAO:
                     FROM evaluation_tests t
                     LEFT JOIN evaluation_test_results r ON t.id = r.test_id
                     LEFT JOIN sensors s ON r.stimulus_id = s.sensor
-                    WHERE s.layout = "pro"
+                    WHERE s.layout = ?
                     ORDER BY t.id, r.round_num ASC;
-                """)
+                """, (layout,))
         
         rows = cursor.fetchall()
         

@@ -4,6 +4,9 @@ from tkinter import ttk
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import io
+import statsmodels.api as sm
+
+
 
 from PIL import Image
 
@@ -56,9 +59,6 @@ class AnalysisView(ctk.CTkToplevel):
         self.stats_frame = ctk.CTkFrame(self.right_frame)
         self.stats_frame.pack(fill="both", expand=True)
 
-        evaluation = self.controller.get_evaluation_results(1, 1)
-        self.create_card(self.stats_frame, "Tempo Médio de Reação", "0.452 s")
-
 
         self.figure_frame = ctk.CTkFrame(self.stats_frame)
         self.figure_frame.pack(fill="x", pady=10)
@@ -66,7 +66,14 @@ class AnalysisView(ctk.CTkToplevel):
         self.table_frame = ctk.CTkFrame(self.stats_frame)
         self.table_frame.pack(fill="both", expand=True, pady=10)
 
+
+    def populate_athlete_stats(self, athlete):
+        df = self.controller.get_evaluation_results(athlete.id)
+        #self.create_card(self.stats_frame, "AVG", "0.452 s")
         
+        print(df.head(15))
+        
+
         
     def create_card(self, frame, title, value, width=200, height=100):
         card = ctk.CTkFrame(frame, width=width, height=height, corner_radius=10)
@@ -78,17 +85,29 @@ class AnalysisView(ctk.CTkToplevel):
 
         value_label = ctk.CTkLabel(card, text=value, font=ctk.CTkFont(size=20, weight="bold"), text_color="#00ff00")
         value_label.pack(pady=(5,0))
-        
-        
-       
+    
 
+
+    def reaction_stats(self, df):
+        return {
+            "mean": df["reaction_time"].mean(),
+            "median": df["reaction_time"].median(),
+            "std": df["reaction_time"].std(),
+            "mean_rt": df["reaction_time_adjusted"].mean(),
+            "median_rt": df["reaction_time_adjusted"].median(),
+            "std_rt": df["reaction_time_adjusted"].std()
+        }
+    
+
+        
     def on_athlete_selected(self, event):
         selected_atl = self.athlete_var.get()
         athlete = next((a for a in self.athletes if a.name == selected_atl), None)
         if athlete:
-            print(f"Athlete selecionado: {athlete.id} - {athlete.name}")
             self.update_profile(athlete)
             self.update_statistics(athlete)
+            self.populate_athlete_stats(athlete)
+            
 
     def update_profile(self, athlete):
         self.info_labels["Name"].configure(text=f"Name: {athlete.name}")
