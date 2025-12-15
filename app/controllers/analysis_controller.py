@@ -54,32 +54,53 @@ class AnalysisController:
 
         return df
     
-    def compare_last_session(self, df):
-        """Compara os últimos dois testes do atleta."""
-        last_test = df["test_id"].max()
-        prev_test = df["test_id"].unique()
-        prev_test = [t for t in prev_test if t != last_test]
+    def compare_adaptive_window(self, df, window_size=5, stable_threshold=3.0):
+        """
+        Compara duas janelas consecutivas de sessões do atleta (N adaptativo)
+        e retorna estatísticas + tendência semântica.
+        """
 
-        if len(prev_test) == 0:
+        # Garantir ordem por sessão
+        test_ids = sorted(df["test_id"].unique())
+
+        # Precisa de pelo menos 2N sessões
+        if len(test_ids) < window_size * 2:
             return None
 
-        prev_test = max(prev_test)
+        # Definição das janelas
+        recent_tests = test_ids[-window_size:]
+        previous_tests = test_ids[-(window_size * 2):-window_size]
 
-        last_df = df[df["test_id"] == last_test]
-        prev_df = df[df["test_id"] == prev_test]
+        recent_df = df[df["test_id"].isin(recent_tests)]
+        previous_df = df[df["test_id"].isin(previous_tests)]
 
-        last_mean = last_df["reaction_time_adjusted"].mean()
-        prev_mean = prev_df["reaction_time_adjusted"].mean()
+        recent_mean = recent_df["reaction_time_adjusted"].mean()
+        previous_mean = previous_df["reaction_time_adjusted"].mean()
 
-        improvement = ((prev_mean - last_mean) / prev_mean) * 100
+        improvement = ((previous_mean - recent_mean) / previous_mean) * 100
+
+        # ------------------- Tendência semântica -------------------
+        if improvement > stable_threshold:
+            trend = "improving"
+        elif improvement < -stable_threshold:
+            trend = "declining"
+        else:
+            trend = "stable"
 
         return {
-            "previous_test_id": prev_test,
-            "last_test_id": last_test,
-            "prev_adj_mean": prev_mean,
-            "last_adj_mean": last_mean,
-            "improvement_percent": improvement
+            "window_size": int(window_size),
+
+            "previous_tests": [int(t) for t in previous_tests],
+            "recent_tests": [int(t) for t in recent_tests],
+
+            "previous_adj_mean": round(float(previous_mean), 1),
+            "recent_adj_mean": round(float(recent_mean), 1),
+
+            "improvement_percent": round(float(improvement), 1),
+            "trend": trend
         }
+
+
 
 
     def remove_outliers_global(self, df, column="reaction_time", sensor_column="stimulus_id", k=1.5):
@@ -94,7 +115,7 @@ class AnalysisController:
             return sensor_df[(sensor_df[column] >= lower) & (sensor_df[column] <= upper)]
         
         # Seleciona explicitamente todas as colunas (evita aviso futuro)
-        df_clean = df.groupby(sensor_column, group_keys=False).apply(lambda x: filter_sensor(x))
+        df_clean = df.groupby(sensor_column, group_keys=False).apply(lambda x: filter_sensor(x), include_groups=False)
 
         return df_clean
 
