@@ -5,8 +5,6 @@ from tkinter import ttk
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import io
 
-
-
 from PIL import Image
 
 class AnalysisView(ctk.CTkToplevel):
@@ -63,10 +61,14 @@ class AnalysisView(ctk.CTkToplevel):
         self.stats_frame = ctk.CTkFrame(self.right_frame)
         self.stats_frame.pack(fill="both", expand=True)
 
-        self.figure_frame = ctk.CTkFrame(self.stats_frame)
-        self.figure_frame.pack(fill="x", pady=10)
+        self.card_index = 0
+        self.cards_per_row = 5
 
-        # Frame da linha de título colorida
+        # Frame visual (pode usar pack)
+        self.figure_frame = ctk.CTkFrame(self.stats_frame)
+        self.figure_frame.pack(fill="x", pady=2)
+
+         # Frame da linha de título colorida
         title_frame = ctk.CTkFrame(
             self.figure_frame,
             fg_color="#2b2b2b",  # cor de fundo da linha de título
@@ -84,9 +86,15 @@ class AnalysisView(ctk.CTkToplevel):
         )
         title_label.place(relx=0.5, rely=0.5, anchor="center")
 
-        self.table_frame = ctk.CTkFrame(self.stats_frame)
-        self.table_frame.pack(fill="both", expand=True, pady=10)
+        # Frame exclusivo para grid (IMPORTANTE)
+        self.cards_grid = ctk.CTkFrame(self.figure_frame, fg_color="transparent")
+        self.cards_grid.pack(anchor="w")
 
+        # Configura colunas do grid
+        for i in range(self.cards_per_row):
+            self.cards_grid.grid_columnconfigure(i, weight=0)
+
+        
     def on_athlete_selected(self, event):
         selected_atl = self.athlete_var.get()
         self.athlete = next((a for a in self.athletes if a.name == selected_atl), None)
@@ -97,28 +105,43 @@ class AnalysisView(ctk.CTkToplevel):
 
     def load_athlete_dataset(self):
         self.df = self.controller.get_evaluation_results(self.athlete.id)
-       
-        rs_m = self.reaction_stats(self.df)
-        rt_status = self.controller.compare_adaptive_window(self.df)
-        
+        rs_m = self.controller.reaction_stats(self.df)
+
+        trt_metric = self.controller.compare_adaptive_window(self.df[self.df["error"] == 0], "trt")
         self.create_custom_card(
-            frame=self.figure_frame,
+            frame=self.cards_grid,
             width=180,
             height=145,
             title="TRT",
             left_value=rs_m["mean_rt"],
             right_top=rs_m["median_rt"],
             right_bottom=rs_m["std_rt"],
-            footer=int(rt_status["improvement_percent"]),
-            trend=rt_status["trend"]
-        )
+            footer=int(trt_metric["improvement_percent"]),
+            trend=trt_metric["trend"])
         
-
+        art_metric = self.controller.compare_adaptive_window(self.df[self.df["error"] == 0], "art")
+        self.create_custom_card(
+            frame=self.cards_grid,
+            width=180,
+            height=145,
+            title="ART",
+            left_value=rs_m["mean"],
+            right_top=rs_m["median"],
+            right_bottom=rs_m["std"],
+            footer=int(art_metric["improvement_percent"]),
+            trend=art_metric["trend"])
+        
+        
     def create_custom_card(self, frame, width, height, title="", left_value="", right_top="", right_bottom="", footer="", trend=None):
         # ---------------------- Card Base ----------------------
+        row = self.card_index // self.cards_per_row
+        col = self.card_index % self.cards_per_row
+
         card = ctk.CTkFrame(frame, width=width, height=height, corner_radius=5, border_color="#282828", border_width=1)
-        card.pack(padx=6, pady=6, anchor="w")
-        card.pack_propagate(False)
+        card.grid(row=row, column=col, padx=2, pady=2, sticky="nw")
+        card.grid_propagate(False)
+
+        self.card_index += 1
 
         # ---------------------- Linha 1: Título ----------------------
         titel_frame = ctk.CTkFrame(card, height=30, corner_radius=5)
@@ -138,16 +161,16 @@ class AnalysisView(ctk.CTkToplevel):
         # ---------------------- Linha 2: Conteúdo ----------------------
         # ---------------------- Linha do meio: grid layout ----------------------
         middle_row = ctk.CTkFrame(card, height=60)
-        middle_row.pack(fill="x", expand=True, padx=8)
+        middle_row.pack(padx=8, pady=2)
         middle_row.pack_propagate(False)
 
        # Configura grid da linha do meio: 1 row, 2 colunas
         middle_row.grid_rowconfigure(0, weight=1)
-        middle_row.grid_columnconfigure(0, weight=1)  # Coluna esquerda 50%
-        middle_row.grid_columnconfigure(1, weight=1)  # Coluna direita 50%
+        middle_row.grid_columnconfigure(0, weight=0, minsize=85)
+        middle_row.grid_columnconfigure(1, weight=0, minsize=75)  # Coluna direita 50%
         
         # Frame interno da coluna esquerda
-        left_frame = ctk.CTkFrame(middle_row, fg_color=None)  # transparente
+        left_frame = ctk.CTkFrame(middle_row, fg_color="#2b2b2b")  # transparente
         left_frame.grid(row=0, column=0, sticky="nsew", padx=2, pady=2)
 
         # Configura grid para centralizar verticalmente
@@ -161,10 +184,10 @@ class AnalysisView(ctk.CTkToplevel):
             text=left_value,
             font=ctk.CTkFont(size=20, weight="bold"),
             text_color="#00ff00",
-            fg_color="#2b2b2b",
-            corner_radius=5
+            fg_color="#2b2b2b"
+            
         )
-        left_label.grid(row=0, column=0, sticky="nsew", pady=(0,0))
+        left_label.grid(row=0, column=0, pady=(6, 0))
 
         # Texto menor
         left_small_label = ctk.CTkLabel(
@@ -174,12 +197,12 @@ class AnalysisView(ctk.CTkToplevel):
             text_color="#aaaaaa",
             fg_color="#2b2b2b"
         )
-        left_small_label.grid(row=1, column=0, sticky="nsew", pady=(0,0))
+        left_small_label.grid(row=1, column=0, pady=(0, 6))
         
         # ----------------- Coluna direita (2 linhas internas) -----------------
         # Frame para organizar as duas linhas
         right_frame = ctk.CTkFrame(middle_row, fg_color="#2b2b2b")
-        right_frame.grid(row=0, column=1, sticky="nsew", padx=2, pady=2)
+        right_frame.grid(row=0, column=1, sticky="n", padx=2, pady=2)
         right_frame.grid_rowconfigure(0, weight=1)
         right_frame.grid_rowconfigure(1, weight=1)
         right_frame.grid_columnconfigure(0, weight=1)
@@ -248,15 +271,7 @@ class AnalysisView(ctk.CTkToplevel):
         return card
 
 
-    def reaction_stats(self, df):
-        return {
-            "mean": round(df["reaction_time"].mean(), 1),
-            "median": round(df["reaction_time"].median(), 1),
-            "std": round(df["reaction_time"].std(), 1),
-            "mean_rt": round(df["reaction_time_adjusted"].mean(), 1),
-            "median_rt": round(df["reaction_time_adjusted"].median(), 1),
-            "std_rt": round(df["reaction_time_adjusted"].std(), 1)
-        }
+    
     
     def update_profile(self):
         self.info_labels["Name"].configure(text=f"Name: {self.athlete.name}")

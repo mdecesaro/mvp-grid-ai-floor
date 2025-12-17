@@ -14,6 +14,16 @@ class AnalysisController:
 
         return athletes
 
+    def reaction_stats(self, df):
+        return {
+            "mean": round(df["reaction_time"].mean(), 1),
+            "median": round(df["reaction_time"].median(), 1),
+            "std": round(df["reaction_time"].std(), 1),
+            "mean_rt": round(df["reaction_time_adjusted"].mean(), 1),
+            "median_rt": round(df["reaction_time_adjusted"].median(), 1),
+            "std_rt": round(df["reaction_time_adjusted"].std(), 1)
+        }
+    
     def get_evaluation_results(self, athlete_id):
         data = self.evaluation_dao.select_data_for_training("pro")
         df = pd.DataFrame(data)
@@ -54,7 +64,7 @@ class AnalysisController:
 
         return df
     
-    def compare_adaptive_window(self, df, window_size=5, stable_threshold=3.0):
+    def compare_adaptive_window(self, df, mean_metric, window_size=5, stable_threshold=3.0):
         """
         Compara duas janelas consecutivas de sessões do atleta (N adaptativo)
         e retorna estatísticas + tendência semântica.
@@ -74,8 +84,12 @@ class AnalysisController:
         recent_df = df[df["test_id"].isin(recent_tests)]
         previous_df = df[df["test_id"].isin(previous_tests)]
 
-        recent_mean = recent_df["reaction_time_adjusted"].mean()
-        previous_mean = previous_df["reaction_time_adjusted"].mean()
+        if (mean_metric == "art"):
+            recent_mean = recent_df["reaction_time"].mean()
+            previous_mean = previous_df["reaction_time"].mean()
+        elif (mean_metric == "trt"):
+            recent_mean = recent_df["reaction_time_adjusted"].mean()
+            previous_mean = previous_df["reaction_time_adjusted"].mean()  
 
         improvement = ((previous_mean - recent_mean) / previous_mean) * 100
 
@@ -89,20 +103,14 @@ class AnalysisController:
 
         return {
             "window_size": int(window_size),
-
             "previous_tests": [int(t) for t in previous_tests],
             "recent_tests": [int(t) for t in recent_tests],
-
             "previous_adj_mean": round(float(previous_mean), 1),
             "recent_adj_mean": round(float(recent_mean), 1),
-
             "improvement_percent": round(float(improvement), 1),
             "trend": trend
         }
-
-
-
-
+    
     def remove_outliers_global(self, df, column="reaction_time", sensor_column="stimulus_id", k=1.5):
         def filter_sensor(sensor_df):
             sensor_df = sensor_df.copy()
